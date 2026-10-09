@@ -1,10 +1,9 @@
-
 package com.codzee.reviewlab.task;
 
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -28,8 +27,16 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Task>> getAllTasks() {
-        return ResponseEntity.ok(taskService.getAllTasks());
+    public ResponseEntity<List<Task>> getAllTasks(
+            @RequestParam(required = false) Boolean completed) {
+
+        if (completed == null) {
+            return ResponseEntity.ok(taskService.getAllTasks());
+        }
+
+        return ResponseEntity.ok(
+                taskService.getTasksByCompletionStatus(completed)
+        );
     }
 
     @GetMapping("/{id}")
