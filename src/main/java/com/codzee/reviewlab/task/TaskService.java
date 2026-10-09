@@ -49,6 +49,7 @@ public class TaskService {
 
         existingTask.setTitle(updatedTask.getTitle());
         existingTask.setDescription(updatedTask.getDescription());
+        existingTask.setCompleted(updatedTask.isCompleted());
 
         return existingTask;
     }

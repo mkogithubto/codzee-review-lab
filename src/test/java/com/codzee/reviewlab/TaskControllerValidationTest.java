@@ -64,18 +64,24 @@ class TaskControllerValidationTest {
                 .andExpect(status().isBadRequest());
     }
 
+
     @Test
     void shouldCreateTaskWhenRequestIsValid() throws Exception {
         MvcResult result = mockMvc.perform(post("/api/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {
-                                  "title": "Complete evaluation",
-                                  "description": "Test valid task creation",
-                                  "completed": true
-                                }
-                                """))
+                            {
+                              "title": "Complete evaluation",
+                              "description": "Test valid task creation",
+                              "completed": true
+                            }
+                            """))
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.title").value("Complete evaluation"))
+                .andExpect(jsonPath("$.description")
+                        .value("Test valid task creation"))
+                .andExpect(jsonPath("$.completed").value(true))
                 .andReturn();
 
         String responseBody = result.getResponse().getContentAsString();
@@ -87,7 +93,6 @@ class TaskControllerValidationTest {
             throw new AssertionError("Created task ID was missing");
         }
 
-        // Capture the ID before assertions so cleanup can run if one fails.
         createdTaskId = Long.parseLong(matcher.group(1));
 
         mockMvc.perform(get("/api/tasks/" + createdTaskId))
@@ -98,6 +103,7 @@ class TaskControllerValidationTest {
                         .value("Test valid task creation"))
                 .andExpect(jsonPath("$.completed").value(true));
     }
+
 
     @Test
     void shouldRejectTitleLongerThan100Characters() throws Exception {
@@ -147,4 +153,48 @@ class TaskControllerValidationTest {
                 .andExpect(jsonPath("$.title").value(title))
                 .andExpect(jsonPath("$.completed").value(true));
     }
+
+
+    @Test
+    void shouldUpdateTaskWhenRequestIsValid() throws Exception {
+        MvcResult createResult = mockMvc.perform(post("/api/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "title": "Original task",
+                              "description": "Original description",
+                              "completed": false
+                            }
+                            """))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String responseBody = createResult.getResponse().getContentAsString();
+
+        Matcher matcher = Pattern.compile("\"id\"\\s*:\\s*(\\d+)")
+                .matcher(responseBody);
+
+        if (!matcher.find()) {
+            throw new AssertionError("Created task ID was missing");
+        }
+
+        createdTaskId = Long.parseLong(matcher.group(1));
+
+        mockMvc.perform(put("/api/tasks/" + createdTaskId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "title": "Updated task",
+                              "description": "Updated description",
+                              "completed": true
+                            }
+                            """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(createdTaskId))
+                .andExpect(jsonPath("$.title").value("Updated task"))
+                .andExpect(jsonPath("$.description")
+                        .value("Updated description"))
+                .andExpect(jsonPath("$.completed").value(true));
+    }
+
 }
