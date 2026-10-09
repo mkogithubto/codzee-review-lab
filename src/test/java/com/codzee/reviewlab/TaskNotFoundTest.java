@@ -25,6 +25,8 @@ class TaskNotFoundTest {
 
     private Long createdTaskId;
 
+    Long deletedTaskId = createdTaskId;
+
     @AfterEach
     void cleanUp() throws Exception {
         if (createdTaskId != null) {
@@ -37,35 +39,37 @@ class TaskNotFoundTest {
     @Test
     void shouldReturn404WhenUpdatingDeletedTask() throws Exception {
         createdTaskId = createTask();
+        Long deletedTaskId = createdTaskId;
 
-        mockMvc.perform(delete("/api/tasks/" + createdTaskId))
+        mockMvc.perform(delete("/api/tasks/" + deletedTaskId))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(put("/api/tasks/" + createdTaskId)
+        createdTaskId = null;
+
+        mockMvc.perform(put("/api/tasks/" + deletedTaskId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {
-                                  "title": "Updated task",
-                                  "description": "Task was deleted",
-                                  "completed": true
-                                }
-                                """))
+                            {
+                              "title": "Updated task",
+                              "description": "Task was deleted",
+                              "completed": true
+                            }
+                            """))
                 .andExpect(status().isNotFound());
-
-        createdTaskId = null;
     }
 
     @Test
     void shouldReturn404WhenDeletingTaskTwice() throws Exception {
         createdTaskId = createTask();
+        Long deletedTaskId = createdTaskId;
 
-        mockMvc.perform(delete("/api/tasks/" + createdTaskId))
+        mockMvc.perform(delete("/api/tasks/" + deletedTaskId))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(delete("/api/tasks/" + createdTaskId))
-                .andExpect(status().isNotFound());
-
         createdTaskId = null;
+
+        mockMvc.perform(delete("/api/tasks/" + deletedTaskId))
+                .andExpect(status().isNotFound());
     }
 
     private Long createTask() throws Exception {
