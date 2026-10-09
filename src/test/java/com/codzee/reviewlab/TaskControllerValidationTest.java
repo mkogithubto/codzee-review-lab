@@ -8,10 +8,13 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+
+
+import org.junit.jupiter.api.AfterEach;
+import org.springframework.test.web.servlet.MvcResult;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -19,6 +22,8 @@ class TaskControllerValidationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    private Long createdTaskId;
 
     @Test
     void shouldRejectBlankTitleWhenCreatingTask() throws Exception {
@@ -49,9 +54,10 @@ class TaskControllerValidationTest {
     }
 
 
+
     @Test
     void shouldCreateTaskWhenRequestIsValid() throws Exception {
-        mockMvc.perform(post("/api/tasks")
+        MvcResult result = mockMvc.perform(post("/api/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -61,8 +67,25 @@ class TaskControllerValidationTest {
                             }
                             """))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.title").value("Complete evaluation"));
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.title").value("Complete evaluation"))
+                .andExpect(jsonPath("$.description")
+                        .value("Test valid task creation"))
+                .andExpect(jsonPath("$.completed").value(false))
+                .andReturn();
+
+        String responseBody = result.getResponse().getContentAsString();
+        java.util.regex.Matcher matcher =
+                java.util.regex.Pattern.compile("\"id\"\\s*:\\s*(\\d+)")
+                        .matcher(responseBody);
+
+        if (!matcher.find()) {
+            throw new AssertionError("Created task ID was missing");
+        }
+
+        createdTaskId = Long.parseLong(matcher.group(1));
     }
+
 
     @Test
     void shouldRejectTitleLongerThan100Characters() throws Exception {
@@ -78,6 +101,14 @@ class TaskControllerValidationTest {
                             }
                             """.formatted(longTitle)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @AfterEach
+    void cleanUp() throws Exception {
+        if (createdTaskId != null) {
+            mockMvc.perform(delete("/api/tasks/" + createdTaskId));
+            createdTaskId = null;
+        }
     }
 
 }
