@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -46,4 +47,37 @@ class TaskControllerValidationTest {
                                 """))
                 .andExpect(status().isBadRequest());
     }
+
+
+    @Test
+    void shouldCreateTaskWhenRequestIsValid() throws Exception {
+        mockMvc.perform(post("/api/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "title": "Complete evaluation",
+                              "description": "Test valid task creation",
+                              "completed": false
+                            }
+                            """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("Complete evaluation"));
+    }
+
+    @Test
+    void shouldRejectTitleLongerThan100Characters() throws Exception {
+        String longTitle = "a".repeat(101);
+
+        mockMvc.perform(post("/api/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "title": "%s",
+                              "description": "Test title length",
+                              "completed": false
+                            }
+                            """.formatted(longTitle)))
+                .andExpect(status().isBadRequest());
+    }
+
 }
