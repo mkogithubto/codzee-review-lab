@@ -1,4 +1,3 @@
-
 package com.codzee.reviewlab.task;
 
 import org.springframework.stereotype.Service;
@@ -7,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 @Service
 public class TaskService {
@@ -15,7 +15,6 @@ public class TaskService {
             new ConcurrentHashMap<>();
 
     private final AtomicLong idGenerator = new AtomicLong(0);
-
 
     public Task createTask(Task task) {
         Long id = idGenerator.incrementAndGet();
@@ -31,9 +30,15 @@ public class TaskService {
         return newTask;
     }
 
-
     public List<Task> getAllTasks() {
         return new ArrayList<>(tasks.values());
+    }
+
+    public List<Task> getTasksByCompletionStatus(boolean completed) {
+        return tasks.values()
+                .stream()
+                .filter(task -> task.isCompleted() == completed)
+                .collect(Collectors.toList());
     }
 
     public Task getTaskById(Long id) {
