@@ -29,14 +29,14 @@ class TaskCompletionFilterTest {
 
     @AfterEach
     void cleanUp() throws Exception {
-        Exception cleanupFailure = null;
+        Throwable cleanupFailure = null;
 
         try {
             if (completedTaskId != null) {
                 mockMvc.perform(delete("/api/tasks/" + completedTaskId))
                         .andExpect(status().isNoContent());
             }
-        } catch (Exception exception) {
+        } catch (Exception | AssertionError exception) {
             cleanupFailure = exception;
         }
 
@@ -45,7 +45,7 @@ class TaskCompletionFilterTest {
                 mockMvc.perform(delete("/api/tasks/" + incompleteTaskId))
                         .andExpect(status().isNoContent());
             }
-        } catch (Exception exception) {
+        } catch (Exception | AssertionError exception) {
             if (cleanupFailure == null) {
                 cleanupFailure = exception;
             } else {
@@ -53,8 +53,12 @@ class TaskCompletionFilterTest {
             }
         }
 
-        if (cleanupFailure != null) {
-            throw cleanupFailure;
+        if (cleanupFailure instanceof Exception exception) {
+            throw exception;
+        }
+
+        if (cleanupFailure instanceof AssertionError assertionError) {
+            throw assertionError;
         }
     }
 
