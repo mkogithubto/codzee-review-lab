@@ -1,11 +1,20 @@
 
 package com.codzee.reviewlab.task;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class Task {
 
     private Long id;
+
+    @NotBlank(message = "Task title is required")
+    @Size(max = 100, message = "Task title must not exceed 100 characters")
     private String title;
+
+    @Size(max = 500, message = "Task description must not exceed 500 characters")
     private String description;
+
     private boolean completed;
 
     public Task() {

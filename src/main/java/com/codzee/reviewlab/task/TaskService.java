@@ -16,6 +16,7 @@ public class TaskService {
 
     private final AtomicLong idGenerator = new AtomicLong(0);
 
+
     public Task createTask(Task task) {
         Long id = idGenerator.incrementAndGet();
 
@@ -23,12 +24,13 @@ public class TaskService {
                 id,
                 task.getTitle(),
                 task.getDescription(),
-                false
+                task.isCompleted()
         );
 
         tasks.put(id, newTask);
         return newTask;
     }
+
 
     public List<Task> getAllTasks() {
         return new ArrayList<>(tasks.values());
@@ -47,6 +49,7 @@ public class TaskService {
 
         existingTask.setTitle(updatedTask.getTitle());
         existingTask.setDescription(updatedTask.getDescription());
+        existingTask.setCompleted(updatedTask.isCompleted());
 
         return existingTask;
     }
